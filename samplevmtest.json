@@ -1,0 +1,99 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachines_fortest01_name": {
+            "defaultValue": "fortest01",
+            "type": "String"
+        },
+        "disks_fortest01_OsDisk_1_4082b817331742c1885ac2b68556c449_externalid": {
+            "defaultValue": "/subscriptions/e7be6893-60e5-4773-b872-e4b1710ba92c/resourceGroups/sample01/providers/Microsoft.Compute/disks/fortest01_OsDisk_1_4082b817331742c1885ac2b68556c449",
+            "type": "String"
+        },
+        "networkInterfaces_fortest01692_externalid": {
+            "defaultValue": "/subscriptions/e7be6893-60e5-4773-b872-e4b1710ba92c/resourceGroups/sample01/providers/Microsoft.Network/networkInterfaces/fortest01692",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2022-03-01",
+            "name": "[parameters('virtualMachines_fortest01_name')]",
+            "location": "centralindia",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_E2ads_v5"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-datacenter-gensecond",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Windows",
+                        "name": "[concat(parameters('virtualMachines_fortest01_name'), '_OsDisk_1_4082b817331742c1885ac2b68556c449')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "StandardSSD_LRS",
+                            "id": "[parameters('disks_fortest01_OsDisk_1_4082b817331742c1885ac2b68556c449_externalid')]"
+                        },
+                        "deleteOption": "Delete",
+                        "diskSizeGB": 127
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_fortest01_name')]",
+                    "adminUsername": "testvm01",
+                    "windowsConfiguration": {
+                        "provisionVMAgent": true,
+                        "enableAutomaticUpdates": true,
+                        "patchSettings": {
+                            "patchMode": "AutomaticByOS",
+                            "assessmentMode": "ImageDefault",
+                            "enableHotpatching": false
+                        }
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[parameters('networkInterfaces_fortest01692_externalid')]",
+                            "properties": {
+                                "deleteOption": "Detach"
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2022-03-01",
+            "name": "[concat(parameters('virtualMachines_fortest01_name'), '/AzureNetworkWatcherExtension')]",
+            "location": "centralindia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_fortest01_name'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.NetworkWatcher",
+                "type": "NetworkWatcherAgentWindows",
+                "typeHandlerVersion": "1.4"
+            }
+        }
+    ]
+}
